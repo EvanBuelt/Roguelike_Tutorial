@@ -1,0 +1,3 @@
+Install these packeges to C:\python27\Lib\site-packages
+
+These modules are 32-bit modules (since I have python27 32 bit installed)
