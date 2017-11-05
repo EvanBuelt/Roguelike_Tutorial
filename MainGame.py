@@ -7,6 +7,8 @@ import constants
 SURFACE_MAIN = None
 GAME_MAP = None
 PLAYER = None
+ENEMY = None
+
 
 # Struct
 class StructTile:
@@ -16,10 +18,14 @@ class StructTile:
 
 # Objects
 class ObjActor:
-    def __init__(self, x, y, sprite):
-        self.x = x # Map Address
-        self.y = y # Mapp Address
+    def __init__(self, x, y, name_object, sprite, creature=None):
+        self.x = x  # Map Address
+        self.y = y  # Map Address
         self.sprite = sprite
+
+        if creature:
+            self.creature = creature
+            creature.owner = self
 
     def draw(self):
         global SURFACE_MAIN
@@ -29,6 +35,26 @@ class ObjActor:
         if GAME_MAP[self.x + dx][self.y + dy].block_path == False:
             self.x += dx
             self.y += dy
+
+
+# Components
+class ComCreature:
+    '''
+    Creatures have health, can damage other objects by attacking them, and can also die.
+    '''
+    def __init__(self, name_instance, hp=10):
+        self.name_instance = name_instance
+        self.hp = hp
+
+
+class ComItem:
+    def __init__(self):
+        return
+
+
+class ComContainer:
+    def __init__(self):
+        return
 
 
 # Map
@@ -44,7 +70,7 @@ def map_create():
 # Drawing
 def draw_game():
 
-    global SURFACE_MAIN, GAME_MAP, PLAYER
+    global SURFACE_MAIN, GAME_MAP, PLAYER, ENEMY
 
     # clear the screen
     SURFACE_MAIN.fill(constants.COLOR_DEFAULT_BG)
@@ -53,6 +79,7 @@ def draw_game():
     draw_map(GAME_MAP)
 
     # draw the character
+    ENEMY.draw()
     PLAYER.draw()
 
     # update the display
@@ -109,7 +136,7 @@ def game_main_loop():
 def game_initialize():
     '''This function initializes the main window and pygame'''
 
-    global SURFACE_MAIN, GAME_MAP, PLAYER
+    global SURFACE_MAIN, GAME_MAP, PLAYER, ENEMY
 
     # initialize pygame
     pygame.init()
@@ -117,7 +144,11 @@ def game_initialize():
     SURFACE_MAIN = pygame.display.set_mode((constants.GAME_WIDTH, constants.GAME_HEIGHT))
     GAME_MAP = map_create()
 
-    PLAYER = ObjActor(0, 0, constants.S_PLAYER)
+    creature_com1 = ComCreature("Greg")
+    PLAYER = ObjActor(0, 0, "Python", constants.S_PLAYER, creature=creature_com1)
+
+    creature_com2 = ComCreature("Bobby")
+    ENEMY = ObjActor(15, 15, "Crab", constants.S_ENEMY, creature=creature_com2)
 
 
 # Execute game
