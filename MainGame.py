@@ -72,7 +72,8 @@ class ObjActor:
                 break
 
         if target:
-            print self.creature.name_instance + " attacks " + target.creature.name_instance
+            print self.creature.name_instance + " attacks " + target.creature.name_instance + " for 5 damage!"
+            target.creature.take_damage(5)
 
         if not tile_is_wall:
             self.x += dx
@@ -92,9 +93,20 @@ class ComCreature:
     '''
     Creatures have health, can damage other objects by attacking them, and can also die.
     '''
-    def __init__(self, name_instance, hp=10):
+    def __init__(self, name_instance, hp=10, death_function=None):
         self.name_instance = name_instance
         self.hp = hp
+        self.max_hp = hp
+        self.death_function = death_function
+
+    def take_damage(self, damage):
+        self.hp -= damage
+        print self.name_instance + "'s health is " + str(self.hp) + "/" + str(self.max_hp)
+
+        if self.hp <= 0:
+
+            if self.death_function:
+                self.death_function(self.owner)
 
 
 class ComItem:
@@ -120,6 +132,16 @@ class AITest:
     """
     def take_turn(self):
         self.owner.move(libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1))
+
+
+def death_monster(monster):
+    '''
+    On death, most monsters stop moving
+    '''
+
+    print monster.creature.name_instance + " is dead!"
+    monster.creature = None
+    monster.ai = None
 
 
 #  __  __
@@ -242,7 +264,7 @@ def game_initialize():
     creature_com1 = ComCreature("Greg")
     PLAYER = ObjActor(1, 1, "Python", constants.S_PLAYER, creature=creature_com1)
 
-    creature_com2 = ComCreature("Bobby")
+    creature_com2 = ComCreature("Bobby", death_function=death_monster)
     ai_com = AITest()
     ENEMY = ObjActor(15, 15, "Crab", constants.S_ENEMY, creature=creature_com2, ai=ai_com)
 
