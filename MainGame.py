@@ -57,28 +57,6 @@ class ObjActor:
         global SURFACE_MAIN
         SURFACE_MAIN.blit(self.sprite, (self.x * constants.CELL_WIDTH, self.y * constants.CELL_HEIGHT))
 
-    def move(self, dx, dy):
-        global GAME_OBJECTS
-        tile_is_wall = GAME_MAP[self.x + dx][self.y + dy].block_path
-
-        target = None
-
-        for object in GAME_OBJECTS:
-            if (object is not self and
-                    object.x == self.x + dx and
-                    object.y == self.y + dy and
-                    object.creature):
-                target = object
-                break
-
-        if target:
-            print self.creature.name_instance + " attacks " + target.creature.name_instance + " for 5 damage!"
-            target.creature.take_damage(5)
-
-        if not tile_is_wall:
-            self.x += dx
-            self.y += dy
-
 
 #   _____                                             _
 #  / ____|                                           | |
@@ -98,6 +76,25 @@ class ComCreature:
         self.hp = hp
         self.max_hp = hp
         self.death_function = death_function
+        self.owner = None
+
+    def move(self, dx, dy):
+        global GAME_OBJECTS
+        tile_is_wall = GAME_MAP[self.owner.x + dx][self.owner.y + dy].block_path
+
+        target = map_check_for_creature(self.owner.x + dx, self.owner.y + dy, self.owner)
+
+        if target:
+            self.attack(target, 5)
+
+        if not tile_is_wall:
+            self.owner.x += dx
+            self.owner.y += dy
+
+    def attack(self, target, damage):
+        print self.name_instance + " attacks " + target.creature.name_instance + " for 5 damage"
+
+        target.creature.take_damage(damage)
 
     def take_damage(self, damage):
         self.hp -= damage
@@ -107,7 +104,6 @@ class ComCreature:
 
             if self.death_function:
                 self.death_function(self.owner)
-
 
 class ComItem:
     def __init__(self):
@@ -131,7 +127,7 @@ class AITest:
     Once per turn, execute
     """
     def take_turn(self):
-        self.owner.move(libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1))
+        self.owner.creature.move(libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1))
 
 
 def death_monster(monster):
@@ -168,6 +164,33 @@ def map_create():
         new_map[constants.MAP_WIDTH - 1][y].block_path = True
 
     return new_map
+
+
+def map_check_for_creature(x, y, exclude_object=None):
+    global GAME_OBJECTS
+
+    target = None
+
+    if exclude_object:
+        for object in GAME_OBJECTS:
+            if (object is not exclude_object and
+                    object.x == x and
+                    object.y == y and
+                    object.creature):
+                target = object
+
+            if target:
+                return target
+    else:
+        for object in GAME_OBJECTS:
+            if (object.x == x and
+                    object.y == y and
+                    object.creature):
+                target = object
+
+            if target:
+                return target
+
 
 
 #  _____                     _
@@ -284,16 +307,16 @@ def game_handle_keys():
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
-                PLAYER.move(0, -1)
+                PLAYER.creature.move(0, -1)
                 return "Player Moved"
             elif event.key == pygame.K_DOWN:
-                PLAYER.move(0, 1)
+                PLAYER.creature.move(0, 1)
                 return "Player Moved"
             elif event.key == pygame.K_LEFT:
-                PLAYER.move(-1, 0)
+                PLAYER.creature.move(-1, 0)
                 return "Player Moved"
             elif event.key == pygame.K_RIGHT:
-                PLAYER.move(1, 0)
+                PLAYER.creature.move(1, 0)
                 return "Player Moved"
 
     return "No Action"
